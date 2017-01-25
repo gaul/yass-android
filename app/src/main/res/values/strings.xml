@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">YASS</string>
+
+    <string name="menu_reload">Reload</string>
+    <string name="menu_settings">Settings</string>
+
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="pref_bucket_name">Bucket</string>
+    <string name="pref_bucket_name_summary">Name of bucket to store data</string>
+    <string name="pref_access_key">Access Key</string>
+    <string name="pref_access_key_summary">AWS Access Key (AKIA...)</string>
+    <string name="pref_secret_key">Secret Key</string>
+    <string name="pref_secret_key_summary">AWS Secret Key</string>
+
+</resources>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/title_activity_settings">
+
+        <EditTextPreference
+            android:key="access_key"
+            android:title="@string/pref_access_key"
+            android:summary="@string/pref_access_key_summary"
+            android:inputType="text"
+            android:maxLines="1"
+            />
+
+        <EditTextPreference
+            android:key="secret_key"
+            android:title="@string/pref_secret_key"
+            android:summary="@string/pref_secret_key"
+            android:inputType="text"
+            android:maxLines="1"
+            />
+
+        <EditTextPreference
+            android:key="bucket_name"
+            android:title="@string/pref_bucket_name"
+            android:summary="@string/pref_bucket_name_summary"
+            android:inputType="text"
+            android:maxLines="1"
+            />
+
+    </PreferenceCategory>
+</PreferenceScreen>

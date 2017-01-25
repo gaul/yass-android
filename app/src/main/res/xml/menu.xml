@@ -1,0 +1,15 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/action_reload"
+        android:icon="@mipmap/ic_launcher"
+        android:title="@string/menu_reload"
+        android:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:icon="@mipmap/ic_launcher"
+        android:title="@string/menu_settings"
+        android:showAsAction="always"/>
+
+</menu>
