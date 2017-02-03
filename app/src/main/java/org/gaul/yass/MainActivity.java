@@ -61,6 +61,7 @@ public final class MainActivity extends AppCompatActivity {
     private String accessKey;
     private String secretKey;
     private String bucketName;
+    private String endpoint;
     private ListView mListView;
     private final List<String> listItems = new ArrayList<String>();
     private ArrayAdapter<String> adapter;
@@ -69,12 +70,7 @@ public final class MainActivity extends AppCompatActivity {
     private SharedPreferences.OnSharedPreferenceChangeListener listener =
             new SharedPreferences.OnSharedPreferenceChangeListener() {
                 public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-                    MainActivity.this.accessKey = prefs.getString("access_key", "access_key");
-                    MainActivity.this.secretKey = prefs.getString("secret_key", "secret_key");
-                    MainActivity.this.bucketName = prefs.getString("bucket_name", "bucket_name");
-
-                    BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-                    MainActivity.this.client = new AmazonS3Client(awsCreds, new ClientConfiguration());
+                    MainActivity.this.client = getS3Client();
                 }
             };
 
@@ -89,12 +85,8 @@ public final class MainActivity extends AppCompatActivity {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         prefs.registerOnSharedPreferenceChangeListener(listener);
         // TODO: if prefs not set, show settings
-        this.accessKey = prefs.getString("access_key", "access_key");
-        this.secretKey = prefs.getString("secret_key", "secret_key");
-        this.bucketName = prefs.getString("bucket_name", "bucket_name");
 
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
-        client = new AmazonS3Client(awsCreds, new ClientConfiguration());
+        client = getS3Client();
 
         this.mListView = (ListView) findViewById(R.id.blob_list_view);
         this.adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listItems);
@@ -260,5 +252,19 @@ public final class MainActivity extends AppCompatActivity {
                 return;
             }
         }
+    }
+
+    private AmazonS3Client getS3Client() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        this.accessKey = prefs.getString("access_key", "access_key");
+        this.secretKey = prefs.getString("secret_key", "secret_key");
+        this.bucketName = prefs.getString("bucket_name", "bucket_name");
+        this.endpoint = prefs.getString("endpoint", null);
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
+        AmazonS3Client client = new AmazonS3Client(awsCreds, new ClientConfiguration());
+        if (this.endpoint != null && !this.endpoint.isEmpty()) {
+            client.setEndpoint(this.endpoint);
+        }
+        return client;
     }
 }

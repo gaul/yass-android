@@ -27,5 +27,13 @@
             android:maxLines="1"
             />
 
+        <EditTextPreference
+            android:key="endpoint"
+            android:title="@string/pref_endpoint"
+            android:summary="@string/pref_endpoint_summary"
+            android:inputType="text"
+            android:maxLines="1"
+            />
+
     </PreferenceCategory>
 </PreferenceScreen>
