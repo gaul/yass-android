@@ -29,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -54,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 public final class MainActivity extends AppCompatActivity {
     private static final String TAG = "yass";
@@ -190,7 +192,7 @@ public final class MainActivity extends AppCompatActivity {
 
     // TODO: progress bar
     private class SelectBlobTask extends AsyncTask<String, Void, File> {
-        private ObjectMetadata metadata;
+        private S3Object object;
 
         @Override
         public File doInBackground(String... path) {
@@ -207,7 +209,13 @@ public final class MainActivity extends AppCompatActivity {
 
             File file;
             try {
-                file = File.createTempFile(object.getObjectMetadata().getETag(), null, MainActivity.this.getCacheDir());
+                String eTag = object.getObjectMetadata().getETag();
+                if (eTag == null) {
+                    // Some object stores do not return a sensible ETag, e.g., S3Proxy with
+                    // filesystem backend.
+                    eTag = UUID.randomUUID().toString();
+                }
+                file = File.createTempFile(eTag, null, MainActivity.this.getCacheDir());
                 byte[] buffer = new byte[4096];
                 try (InputStream is = object.getObjectContent();
                      OutputStream os = new FileOutputStream(file)) {
@@ -224,7 +232,7 @@ public final class MainActivity extends AppCompatActivity {
                 return null;
             }
 
-            this.metadata = object.getObjectMetadata();
+            this.object = object;
             return file;
         }
 
@@ -236,7 +244,15 @@ public final class MainActivity extends AppCompatActivity {
             }
 
             Uri uri = FileProvider.getUriForFile(MainActivity.this, "org.gaul.yass", file);
-            String mime = metadata.getContentType();
+            String mime = object.getObjectMetadata().getContentType();
+
+            if (mime == null) {
+                String extension = MimeTypeMap.getFileExtensionFromUrl(object.getKey());
+                if (extension != null) {
+                    mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                    Log.d(TAG, "guessed mime type: " + mime);
+                }
+            }
 
             // TODO: does not work for HTML
             Intent intent = new Intent();
