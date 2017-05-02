@@ -35,11 +35,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -158,8 +158,8 @@ public final class MainActivity extends AppCompatActivity {
                         .withBucketName(bucketName)
                         .withDelimiter("/")
                         .withPrefix(prefix));
-            } catch (AmazonS3Exception ase) {
-                Log.e(TAG, "Error listing with prefix: " + prefix + " " + ase.getMessage());
+            } catch (AmazonClientException ace) {
+                Log.e(TAG, "Error listing with prefix: " + prefix + " " + ace.getMessage());
                 return null;
             }
             for (S3ObjectSummary summary : MainActivity.this.listing.getObjectSummaries()) {
@@ -202,8 +202,8 @@ public final class MainActivity extends AppCompatActivity {
             S3Object object;
             try {
                 object = client.getObject(bucketName, path[0]);
-            } catch (AmazonS3Exception ase) {
-                Log.e(TAG, "Error getting blob: " + key + " " + ase.getMessage());
+            } catch (AmazonClientException ace) {
+                Log.e(TAG, "Error getting blob: " + key + " " + ace.getMessage());
                 return null;
             }
 
