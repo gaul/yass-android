@@ -16,14 +16,15 @@
 package org.gaul.yass;
 
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,10 +61,7 @@ import java.util.UUID;
 public final class MainActivity extends AppCompatActivity {
     private static final String TAG = "yass";
     private AmazonS3 client;
-    private String accessKey;
-    private String secretKey;
-    private String bucketName;
-    private String endpoint;
+    private YassPreferences preferences;
     private ListView mListView;
     private final List<String> listItems = new ArrayList<String>();
     private ArrayAdapter<String> adapter;
@@ -72,7 +70,8 @@ public final class MainActivity extends AppCompatActivity {
     private SharedPreferences.OnSharedPreferenceChangeListener listener =
             new SharedPreferences.OnSharedPreferenceChangeListener() {
                 public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-                    MainActivity.this.client = getS3Client();
+                    MainActivity.this.preferences = new YassPreferences(getApplicationContext());
+                    MainActivity.this.client = getS3Client(MainActivity.this.preferences);
                 }
             };
 
@@ -86,9 +85,10 @@ public final class MainActivity extends AppCompatActivity {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         prefs.registerOnSharedPreferenceChangeListener(listener);
+        preferences = new YassPreferences(getApplicationContext());
         // TODO: if prefs not set, show settings
 
-        client = getS3Client();
+        client = getS3Client(preferences);
 
         this.mListView = (ListView) findViewById(R.id.blob_list_view);
         this.adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listItems);
@@ -155,7 +155,7 @@ public final class MainActivity extends AppCompatActivity {
             String prefix = path[0];
             try {
                 MainActivity.this.listing = client.listObjects(new ListObjectsRequest()
-                        .withBucketName(bucketName)
+                        .withBucketName(preferences.bucketName)
                         .withDelimiter("/")
                         .withPrefix(prefix));
             } catch (AmazonClientException ace) {
@@ -201,7 +201,7 @@ public final class MainActivity extends AppCompatActivity {
 
             S3Object object;
             try {
-                object = client.getObject(bucketName, path[0]);
+                object = client.getObject(preferences.bucketName, path[0]);
             } catch (AmazonClientException ace) {
                 Log.e(TAG, "Error getting blob: " + key + " " + ace.getMessage());
                 return null;
@@ -247,6 +247,7 @@ public final class MainActivity extends AppCompatActivity {
             String mime = object.getObjectMetadata().getContentType();
 
             if (mime == null) {
+                // TODO: all files have a tmp extension so this does not work
                 String extension = MimeTypeMap.getFileExtensionFromUrl(object.getKey());
                 if (extension != null) {
                     mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
@@ -270,16 +271,30 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
-    private AmazonS3Client getS3Client() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        this.accessKey = prefs.getString("access_key", "access_key");
-        this.secretKey = prefs.getString("secret_key", "secret_key");
-        this.bucketName = prefs.getString("bucket_name", "bucket_name");
-        this.endpoint = prefs.getString("endpoint", null);
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKey, secretKey);
+    static final class YassPreferences {
+        final String accessKey;
+        final String secretKey;
+        final String bucketName;
+        final String endpoint;
+        final boolean cameraUpload;
+
+        YassPreferences(Context context) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            // TODO: should default values be null?
+            this.accessKey = prefs.getString("access_key", "access_key");
+            this.secretKey = prefs.getString("secret_key", "secret_key");
+            this.bucketName = prefs.getString("bucket_name", "bucket_name");
+            this.endpoint = prefs.getString("endpoint", null);
+            this.cameraUpload = prefs.getBoolean("camera_upload", false);
+        }
+    }
+
+    static AmazonS3Client getS3Client(YassPreferences preferences) {
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(preferences.accessKey,
+                preferences.secretKey);
         AmazonS3Client client = new AmazonS3Client(awsCreds, new ClientConfiguration());
-        if (this.endpoint != null && !this.endpoint.isEmpty()) {
-            client.setEndpoint(this.endpoint);
+        if (preferences.endpoint != null && !preferences.endpoint.isEmpty()) {
+            client.setEndpoint(preferences.endpoint);
         }
         return client;
     }

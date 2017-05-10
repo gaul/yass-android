@@ -34,6 +34,12 @@
             android:inputType="text"
             android:maxLines="1"
             />
+        <CheckBoxPreference
+            android:key="camera_upload"
+            android:title="@string/pref_camera_upload"
+            android:summary="@string/pref_camera_upload_summary"
+            android:defaultValue="false"
+            />
 
     </PreferenceCategory>
 </PreferenceScreen>

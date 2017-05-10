@@ -14,5 +14,7 @@
     <string name="pref_secret_key_summary">AWS Secret Key</string>
     <string name="pref_endpoint">Endpoint</string>
     <string name="pref_endpoint_summary">Endpoint to use if not using Amazon (https://...)</string>
+    <string name="pref_camera_upload">Camera Upload</string>
+    <string name="pref_camera_upload_summary"></string>
 
 </resources>
