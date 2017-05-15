@@ -48,7 +48,9 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
             Cursor cursor =  context.getContentResolver().query(contentUri, proj, null, null, null);
             int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
             cursor.moveToFirst();
-            return cursor.getString(column_index);
+            String path = cursor.getString(column_index);
+            cursor.close();
+            return path;
         } catch (Exception e) {
             return contentUri.getPath();
         }
@@ -78,6 +80,7 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
             cursor.moveToFirst();
             String fileName = cursor.getString(nameIndex);
             long fileSize = cursor.getLong(sizeIndex);
+            cursor.close();
             Log.i(TAG, "Handling intent: " + fileName + " " + fileSize);
 
             ObjectMetadata metadata = new ObjectMetadata();

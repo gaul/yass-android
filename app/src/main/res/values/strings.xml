@@ -9,12 +9,12 @@
     <string name="pref_bucket_name">Bucket</string>
     <string name="pref_bucket_name_summary">Name of bucket to store data</string>
     <string name="pref_access_key">Access Key</string>
-    <string name="pref_access_key_summary">AWS Access Key (AKIA...)</string>
+    <string name="pref_access_key_summary">AWS Access Key (AKIA&#8230;)</string>
     <string name="pref_secret_key">Secret Key</string>
     <string name="pref_secret_key_summary">AWS Secret Key</string>
     <string name="pref_endpoint">Endpoint</string>
-    <string name="pref_endpoint_summary">Endpoint to use if not using Amazon (https://...)</string>
+    <string name="pref_endpoint_summary">Endpoint to use if not using Amazon (https://&#8230;)</string>
     <string name="pref_camera_upload">Camera Upload</string>
-    <string name="pref_camera_upload_summary"></string>
+    <string name="pref_camera_upload_summary">Uploads new photos automatically</string>
 
 </resources>
