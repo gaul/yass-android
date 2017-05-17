@@ -15,8 +15,10 @@
 
 package org.gaul.yass;
 
+import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -190,9 +192,25 @@ public final class MainActivity extends AppCompatActivity {
         }
     }
 
-    // TODO: progress bar
-    private class SelectBlobTask extends AsyncTask<String, Void, File> {
+    private class SelectBlobTask extends AsyncTask<String, Integer, File> {
+        private ProgressDialog dialog;
         private S3Object object;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            dialog = new ProgressDialog(MainActivity.this);
+            dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            dialog.setMessage("Downloading...");
+            // TODO: use human-friendly units via setProgressNumberFormat
+            dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    cancel(false);
+                }
+            });
+            dialog.show();
+        }
 
         @Override
         public File doInBackground(String... path) {
@@ -206,7 +224,8 @@ public final class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Error getting blob: " + key + " " + ace.getMessage());
                 return null;
             }
-
+            long contentLength = object.getObjectMetadata().getContentLength();
+            dialog.setMax((int) contentLength);
             File file;
             try {
                 String eTag = object.getObjectMetadata().getETag();
@@ -219,12 +238,19 @@ public final class MainActivity extends AppCompatActivity {
                 byte[] buffer = new byte[4096];
                 try (InputStream is = object.getObjectContent();
                      OutputStream os = new FileOutputStream(file)) {
+                    long progress = 0;
                     while (true) {
                         int count = is.read(buffer);
                         if (count == -1) {
                             break;
                         }
                         os.write(buffer, 0, count);
+                        progress += count;
+                        publishProgress((int) progress);
+                        if (isCancelled()) {
+                            Log.i(TAG, "Cancelling: " + key);
+                            return null;
+                        }
                     }
                 }
             } catch (IOException ioe) {
@@ -237,7 +263,17 @@ public final class MainActivity extends AppCompatActivity {
         }
 
         @Override
+        protected void onProgressUpdate(Integer... progress) {
+            dialog.setProgress(progress[0]);
+        }
+
+        @Override
         protected void onPostExecute(File file) {
+            super.onPostExecute(file);
+            if (dialog != null) {
+                dialog.dismiss();
+            }
+
             if (file == null) {
                 Toast.makeText(MainActivity.this, "Could not download file", Toast.LENGTH_LONG).show();
                 return;
@@ -267,6 +303,14 @@ public final class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "No intent for " + object.getKey() + " " + anfe);
                 Toast.makeText(MainActivity.this, "No registered intent", Toast.LENGTH_LONG).show();
                 return;
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            if (dialog != null) {
+                dialog.dismiss();
             }
         }
     }
