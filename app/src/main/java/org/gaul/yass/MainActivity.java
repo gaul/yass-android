@@ -247,10 +247,10 @@ public final class MainActivity extends AppCompatActivity {
             String mime = object.getObjectMetadata().getContentType();
 
             if (mime == null) {
-                // TODO: all files have a tmp extension so this does not work
-                String extension = MimeTypeMap.getFileExtensionFromUrl(object.getKey());
-                if (extension != null) {
-                    mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+                int index = object.getKey().lastIndexOf('.');
+                if (index != -1) {
+                    mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
+                            object.getKey().substring(index + 1));
                     Log.d(TAG, "guessed mime type: " + mime);
                 }
             }
@@ -264,7 +264,7 @@ public final class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             } catch (ActivityNotFoundException anfe) {
                 // TODO: convert to text/plain?
-                Log.e(TAG, "No intent for " + file + " " + anfe);
+                Log.e(TAG, "No intent for " + object.getKey() + " " + anfe);
                 Toast.makeText(MainActivity.this, "No registered intent", Toast.LENGTH_LONG).show();
                 return;
             }
