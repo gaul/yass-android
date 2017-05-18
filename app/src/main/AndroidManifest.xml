@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.gaul.yass">
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
@@ -23,6 +24,9 @@
             <intent-filter android:priority="10000" >
                 <action android:name="com.android.camera.NEW_PICTURE"/>
                 <data android:mimeType="image/*"/>
+            </intent-filter>
+            <intent-filter android:priority="10000" >
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
             </intent-filter>
         </receiver>
 

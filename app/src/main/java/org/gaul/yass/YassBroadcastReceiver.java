@@ -16,9 +16,13 @@
 package org.gaul.yass;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.provider.OpenableColumns;
@@ -32,24 +36,32 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public final class YassBroadcastReceiver extends BroadcastReceiver {
+    // TODO: needs to run once on startup
+
     private static final String TAG = "YassBroadcastReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "Received new photo: " + intent.getData().getPath());
-        new UploadBlobTask(context).execute(intent);
+        if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
+            Log.d(TAG, "Received connectivity intent: " + intent);
+            if (!intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, false)) {
+                new UploadBlobTask(context).execute((Void) null);
+            }
+        } else {
+            Log.d(TAG, "Received new photo: " + intent.getData().getPath());
+            new EnqueueCameraTask(context).execute(intent);
+        }
     }
 
-    // TODO: needs to work offline
-    private final class UploadBlobTask extends AsyncTask<Intent, Void, String> {
+    private final class EnqueueCameraTask extends AsyncTask<Intent, Void, Long> {
         private final Context context;
 
-        UploadBlobTask(Context context) {
+        EnqueueCameraTask(Context context) {
             this.context = context;
         }
 
         @Override
-        public String doInBackground(Intent... intent) {
+        public Long doInBackground(Intent... intent) {
             MainActivity.YassPreferences preferences = new MainActivity.YassPreferences(context);
             if (!preferences.cameraUpload) {
                 return null;
@@ -63,7 +75,86 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
             String fileName = cursor.getString(nameIndex);
             long fileSize = cursor.getLong(sizeIndex);
             cursor.close();
-            Log.i(TAG, "Handling intent: " + fileName + " " + fileSize);
+
+            SQLiteDatabase db = new YassDbHelper(context).getWritableDatabase();
+
+            try {
+                ContentValues values = new ContentValues();
+                values.put("file_uri", uri.toString());
+                values.put("file_name", fileName);
+                values.put("file_size", fileSize);
+                return db.insert("camera_uploads", null, values);
+            } finally {
+                db.close();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Long serial) {
+            new UploadBlobTask(context).execute((Void) null);
+        }
+    }
+
+    private final class UploadBlobTask extends AsyncTask<Void, Void, Long> {
+        private final Context context;
+
+        UploadBlobTask(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        public Long doInBackground(Void... unused) {
+            Log.d(TAG, "Upload Blob Task:");
+
+            MainActivity.YassPreferences preferences = new MainActivity.YassPreferences(context);
+
+            ConnectivityManager cm =
+                    (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            boolean isConnected = activeNetwork != null &&
+                      activeNetwork.isConnectedOrConnecting();
+            if (!isConnected) {
+                return null;
+            }
+            // TODO: check wifi
+
+            long serial;
+            Uri uri;
+            String fileName;
+            long fileSize;
+            SQLiteDatabase db = new YassDbHelper(context).getReadableDatabase();
+            try {
+                String[] projection = {
+                        "serial",
+                        "file_uri",
+                        "file_name",
+                        "file_size"
+                };
+                String selection = null;
+                String[] selectionArgs = null;
+                String groupBy = null;
+                String having = null;
+                String orderBy = "serial ASC";
+                String limit = "1";
+                Cursor cursor = db.query("camera_uploads", projection, selection, selectionArgs,
+                        groupBy, having, orderBy, limit);
+                try {
+                    if (!cursor.moveToNext()) {
+                        Log.d(TAG, "Did not find image to upload");
+                        return null;
+                    }
+                    serial = cursor.getLong(cursor.getColumnIndexOrThrow("serial"));
+                    uri = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow("file_uri")));
+                    fileName = cursor.getString(cursor.getColumnIndexOrThrow("file_name"));
+                    fileSize = cursor.getLong(cursor.getColumnIndexOrThrow("file_size"));
+                } finally {
+                    cursor.close();
+                }
+            } finally {
+                db.close();
+            }
+
+            Log.d(TAG, "Found image to upload: " + fileName);
 
             ObjectMetadata metadata = new ObjectMetadata();
             metadata.setContentLength(fileSize);
@@ -77,11 +168,25 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
                 Log.e(TAG, "Could not upload file: " + e.getMessage());
                 return null;
             }
-            return result.getETag();
+            return serial;
         }
 
         @Override
-        protected void onPostExecute(String eTag) {
+        protected void onPostExecute(Long serial) {
+            if (serial == null) {
+                return;
+            }
+
+            SQLiteDatabase db = new YassDbHelper(context).getWritableDatabase();
+            try {
+                String selection = "serial = ?";
+                String[] selectionArgs = {"serial"};
+                db.delete("camera_uploads", selection, new String[] {serial.toString()});
+            } finally {
+                db.close();
+            }
+
+            new UploadBlobTask(context).execute((Void) null);
         }
     }
 }
