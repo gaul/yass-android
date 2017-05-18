@@ -21,7 +21,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
@@ -41,21 +40,6 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
         new UploadBlobTask(context).execute(intent);
     }
 
-    public String getRealPathFromURI(Uri contentUri, Context context) {
-        try {
-            String[] proj = {MediaStore.Images.Media.DATA};
-
-            Cursor cursor =  context.getContentResolver().query(contentUri, proj, null, null, null);
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            cursor.moveToFirst();
-            String path = cursor.getString(column_index);
-            cursor.close();
-            return path;
-        } catch (Exception e) {
-            return contentUri.getPath();
-        }
-    }
-
     // TODO: needs to work offline
     private final class UploadBlobTask extends AsyncTask<Intent, Void, String> {
         private final Context context;
@@ -70,8 +54,6 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
             if (!preferences.cameraUpload) {
                 return null;
             }
-
-            String[] proj = {MediaStore.Images.Media.DATA};
 
             Uri uri = intent[0].getData();
             Cursor cursor = context.getContentResolver().query(uri, null, null, null, null);
