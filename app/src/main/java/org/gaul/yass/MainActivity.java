@@ -321,6 +321,7 @@ public final class MainActivity extends AppCompatActivity {
         final String bucketName;
         final String endpoint;
         final boolean cameraUpload;
+        final boolean cameraUploadOnlyOnWifi;
 
         YassPreferences(Context context) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -330,6 +331,7 @@ public final class MainActivity extends AppCompatActivity {
             this.bucketName = prefs.getString("bucket_name", "bucket_name");
             this.endpoint = prefs.getString("endpoint", null);
             this.cameraUpload = prefs.getBoolean("camera_upload", false);
+            this.cameraUploadOnlyOnWifi = prefs.getBoolean("camera_upload_only_on_wifi", false);
         }
     }
 

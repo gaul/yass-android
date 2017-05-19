@@ -34,6 +34,7 @@
             android:inputType="text"
             android:maxLines="1"
             />
+
         <CheckBoxPreference
             android:key="camera_upload"
             android:title="@string/pref_camera_upload"
@@ -41,5 +42,11 @@
             android:defaultValue="false"
             />
 
+        <CheckBoxPreference
+            android:key="camera_upload_only_on_wifi"
+            android:title="@string/pref_camera_upload_only_on_wifi"
+            android:summary="@string/pref_camera_upload_summary_only_on_wifi"
+            android:defaultValue="false"
+            />
     </PreferenceCategory>
 </PreferenceScreen>

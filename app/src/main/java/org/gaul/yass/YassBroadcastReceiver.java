@@ -114,9 +114,13 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
             boolean isConnected = activeNetwork != null &&
                       activeNetwork.isConnectedOrConnecting();
             if (!isConnected) {
+                Log.d(TAG, "Skipping camera upload because network is disconnected");
                 return null;
             }
-            // TODO: check wifi
+            if (preferences.cameraUploadOnlyOnWifi && activeNetwork.getType() != ConnectivityManager.TYPE_WIFI) {
+                Log.d(TAG, "Skipping camera upload because Wifi is disconnected");
+                return null;
+            }
 
             long serial;
             Uri uri;

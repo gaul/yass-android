@@ -16,5 +16,7 @@
     <string name="pref_endpoint_summary">Endpoint to use if not using Amazon (https://&#8230;)</string>
     <string name="pref_camera_upload">Camera Upload</string>
     <string name="pref_camera_upload_summary">Uploads new photos automatically</string>
+    <string name="pref_camera_upload_only_on_wifi">&#8230;only on Wifi</string>
+    <string name="pref_camera_upload_summary_only_on_wifi">Only upload new photos when using Wifi</string>
 
 </resources>
