@@ -19,6 +19,7 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
@@ -150,7 +151,15 @@ public final class YassBroadcastReceiver extends BroadcastReceiver {
                     serial = cursor.getLong(cursor.getColumnIndexOrThrow("serial"));
                     uri = Uri.parse(cursor.getString(cursor.getColumnIndexOrThrow("file_uri")));
                     fileName = cursor.getString(cursor.getColumnIndexOrThrow("file_name"));
-                    fileSize = cursor.getLong(cursor.getColumnIndexOrThrow("file_size"));
+                    try {
+                        // get real file size since something modifies the file between the intent and uploading
+                        AssetFileDescriptor afd = context.getContentResolver().openAssetFileDescriptor(uri, "r");
+                        fileSize = afd.getLength();
+                        afd.close();
+                    } catch (IOException ioe) {
+                        Log.e(TAG, "Could not get file size: " + fileName);
+                        return null;
+                    }
                 } finally {
                     cursor.close();
                 }
