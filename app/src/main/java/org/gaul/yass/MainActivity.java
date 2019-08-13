@@ -282,7 +282,7 @@ public final class MainActivity extends AppCompatActivity {
             Uri uri = FileProvider.getUriForFile(MainActivity.this, "org.gaul.yass", file);
             String mime = object.getObjectMetadata().getContentType();
 
-            if (mime == null) {
+            if (mime == null || mime.equals("binary/octet-stream")) {
                 int index = object.getKey().lastIndexOf('.');
                 if (index != -1) {
                     mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(
@@ -300,7 +300,7 @@ public final class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             } catch (ActivityNotFoundException anfe) {
                 // TODO: convert to text/plain?
-                Log.e(TAG, "No intent for " + object.getKey() + " " + anfe);
+                Log.e(TAG, "No intent for " + object.getKey() + " with mime " + mime + " " + anfe);
                 Toast.makeText(MainActivity.this, "No registered intent", Toast.LENGTH_LONG).show();
                 return;
             }
